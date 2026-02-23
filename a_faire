@@ -1,0 +1,26 @@
+Partage des taches : 
+A chaque push vous pourrez mettre un x dans la partie que vous avez fait pour avoir une vue globale du projet
+
+- [ ] Base de donnée
+	- [ ] Créer une table cours (matières durée etc)
+	- [ ] table prof
+	- [ ] table salle
+	- [ ] Table user 
+	- [ ] Table promotion
+- [ ] Back
+	- [ ] GetListeCoursPromo
+	- [ ] GetSalleDispo
+	- [ ] PostCours (création de cours)
+	- [ ] PostProf (création d'un prof)
+	- [ ] DeleteCours
+	- [ ] DeleteProf
+	- [ ] PostUser (créer un user)
+	- [ ] fichier fonction de cryptage
+	- [ ] GetVerifHeureCours
+	- [ ] getConnexion (savoir si l'utilisateur est connecté ou non)
+- [ ] front
+	- [ ] design libre
+	- [ ] fichier de d'appel api
+	- [ ] page de connexion
+	- [ ] page emploie du temps
+	- [ ] menu déroulant pour switcher de promo
