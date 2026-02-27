@@ -18,6 +18,7 @@ A chaque push vous pourrez mettre un x dans la partie que vous avez fait pour av
 	- [ ] fichier fonction de cryptage
 	- [ ] GetVerifHeureCours
 	- [ ] getConnexion (savoir si l'utilisateur est connecté ou non)
+    - [ ] UpdateProf, updateCours etc
 - [ ] front
 	- [ ] design libre
 	- [ ] fichier de d'appel api
