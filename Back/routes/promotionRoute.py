@@ -3,12 +3,12 @@ from Back.controller import promotionController
 
 router = APIRouter()
 
-@router.get("/getListPromotions")
+@router.get("/getListPromotions", summary="Récupère la liste de toutes les promotions existantes")
 def get_list_promotion():
     """Récupère la liste de toutes les promotions existantes."""
     return promotionController.getListPromotion()
 
-@router.post("/addPromotion")
+@router.post("/addPromotion", summary="Crée une nouvelle promotion")
 def add_promotion(nom: str, annee: int):
     """
     Crée une nouvelle promotion.
