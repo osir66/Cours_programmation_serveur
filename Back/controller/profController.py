@@ -27,7 +27,7 @@ def UpdateProf(prof_id, nom=None, prenom=None):
             if prenom is not None:
                 prof["prenom"] = prenom
             return prof
-    return None  # Retourne None si le professeur n'est pas trouvé
+    return {"message": f"Professeur avec id {prof_id} non trouvé.", "status": 404}
 
 def deleteProf(prof_id):
     """Supprime un professeur de la tableProf."""
