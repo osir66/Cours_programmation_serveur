@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Créer un cours</title>
+  <style>
+    body{font-family: Arial, Helvetica, sans-serif;max-width:720px;margin:2rem auto;padding:1rem}
+    label{display:block;margin-top:0.8rem;font-weight:bold;}
+    input{padding:0.4rem;width:100%;box-sizing:border-box;margin-top:0.3rem;}
+    button{margin-top:1.2rem;padding:0.6rem 1rem;cursor:pointer;}
+    pre{background:#f5f5f5;padding:1rem;overflow-x:auto;}
+  </style>
+</head>
+<body>
+  <h1>Créer un cours</h1>
+
+  <form id="createForm">
+    <label for="matiere">Matière</label>
+    <input id="matiere" name="matiere" type="text" required />
+
+    <label for="date_debut">Date de début</label>
+    <input id="date_debut" name="date_debut" type="datetime-local" required />
+
+    <label for="date_fin">Date de fin</label>
+    <input id="date_fin" name="date_fin" type="datetime-local" required />
+
+    <label for="duree_total">Durée totale (Format Date/Heure selon le modèle)</label>
+    <input id="duree_total" name="duree_total" type="datetime-local" required />
+
+    <label for="id_prof">ID du Professeur (optionnel)</label>
+    <input id="id_prof" name="id_prof" type="number" />
+
+    <label for="id_salle">ID de la Salle (optionnel)</label>
+    <input id="id_salle" name="id_salle" type="number" />
+
+    <label for="id_promo">ID de la Promo (optionnel)</label>
+    <input id="id_promo" name="id_promo" type="number" />
+
+    <button type="submit">Créer le cours</button>
+  </form>
+
+  <div id="result" aria-live="polite" style="margin-top:1rem; font-weight:bold;"></div>
+
+  <hr style="margin: 2rem 0;" />
+  <h2>Liste des cours</h2>
+  <button id="refresh">Rafraîchir la liste</button>
+  <pre id="list"></pre>
+
+  <script>
+    const API = window.location.origin;
+
+    const form = document.getElementById('createForm');
+    const result = document.getElementById('result');
+    const listPre = document.getElementById('list');
+
+    // Petite fonction pour gérer les ID optionnels (renvoie null au lieu de NaN si vide)
+    const parseOptionalInt = (value) => {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? null : parsed;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      result.textContent = 'Envoi en cours...';
+      
+      // On récupère et on formate les données pour matcher exactement les attributs SQLModel
+      const payload = {
+        matiere: document.getElementById('matiere').value,
+        date_debut: document.getElementById('date_debut').value,
+        date_fin: document.getElementById('date_fin').value,
+        duree_total: document.getElementById('duree_total').value,
+        id_prof: parseOptionalInt(document.getElementById('id_prof').value),
+        id_salle: parseOptionalInt(document.getElementById('id_salle').value),
+        id_promo: parseOptionalInt(document.getElementById('id_promo').value)
+      };
+
+      try {
+        // Envoi de la requête POST vers /addCours
+        const res = await fetch(API + '/addCours', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(JSON.stringify(json));
+        }
+
+        result.textContent = "Succès : " + JSON.stringify(json, null, 2);
+        form.reset();
+        loadList();
+      } catch (err) {
+        result.textContent = 'Erreur: ' + err.message;
+      }
+    });
+
+    async function loadList(){
+      listPre.textContent = 'Chargement...';
+      try{
+        // Envoi de la requête GET vers /cours
+        const r = await fetch(API + '/cours');
+        const j = await r.json();
+        listPre.textContent = JSON.stringify(j, null, 2);
+      }catch(e){
+        listPre.textContent = 'Impossible de récupérer la liste: ' + e.message;
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadList);
+    // Charge la liste au démarrage
+    loadList();
+  </script>
+</body>
+</html>

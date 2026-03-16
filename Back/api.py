@@ -13,6 +13,7 @@ app.include_router(promotionRoute.router)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 code_creation_prof = BASE_DIR / "Front" / "create_prof.html"
+code_creation_cours = BASE_DIR / "Front" / "create_cours.html"
 
 @app.get("/")
 def read_root():
@@ -23,3 +24,10 @@ def read_root():
     if code_creation_prof.exists():
         return FileResponse(str(code_creation_prof))
     return {"message": "Hello FastAPI"}
+
+@app.get("/cour")
+def read_root():
+    if code_creation_cours.exists():
+        return FileResponse(str(code_creation_cours))
+    return {"message": "Hello FastAPI"}
+
