@@ -1,17 +1,18 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 from Back.controller import promotionController
 
-router = APIRouter()
+router = APIRouter(prefix="/promotions", tags=["Promotions"])
 
-@router.get("/getListPromotions", summary="Récupère la liste de toutes les promotions existantes")
-def get_list_promotion():
-    """Récupère la liste de toutes les promotions existantes."""
-    return promotionController.getListPromotion()
+# On met à jour avec nom_promotion et annee (qui est un int)
+class PromotionCreate(BaseModel):
+    nom_promotion: str
+    annee: int
 
-@router.post("/addPromotion", summary="Crée une nouvelle promotion")
-def add_promotion(nom: str, annee: int):
-    """
-    Crée une nouvelle promotion.
-    Exemple : nom="Master 2", annee=2026
-    """
-    return promotionController.createPromotion(nom, annee)
+@router.get("/")
+def get_list_promotions():
+    return promotionController.getListPromotions()
+
+@router.post("/")
+def add_promotion(promo: PromotionCreate):
+    return promotionController.CreatePromotion(promo.nom_promotion, promo.annee)

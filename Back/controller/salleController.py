@@ -1,42 +1,28 @@
-# Simulation de la tableSalle (à remplacer par une DB plus tard)
-tableSalle = [
-    {"id": 1, "nom": "A101", "capacite": 30},
-    {"id": 2, "nom": "B204", "capacite": 20},
-    {"id": 3, "nom": "Amphi Delta", "capacite": 150}
-]
+import sqlite3
+from pathlib import Path
 
-def getListSalle():
-    """Retourne la liste de toutes les salles."""
-    return tableSalle
+DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
 
-def getOneSalle(salle_id):
-    """Retourne une salle spécifique par son ID."""
-    for salle in tableSalle:
-        if salle["id"] == salle_id:
-            return salle
-    return None
+def get_conn():
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def createSalle(nom, capacite):
-    """Crée une nouvelle salle."""
-    # Gestion de l'ID si la table est vide
-    new_id = max((salle["id"] for salle in tableSalle), default=0) + 1
-    new_salle = {"id": new_id, "nom": nom, "capacite": capacite}
-    tableSalle.append(new_salle)
-    return new_salle
+def getListSalles():
+    conn = get_conn()
+    cur = conn.cursor()
+    # On utilise bien id_salle, nom_salle et capacite
+    cur.execute("SELECT id_salle AS id, nom_salle, capacite FROM salle")
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return rows
 
-def updateSalle(salle_id, nom=None, capacite=None):
-    """Met à jour une salle existante."""
-    for salle in tableSalle:
-        if salle["id"] == salle_id:
-            if nom is not None:
-                salle["nom"] = nom
-            if capacite is not None:
-                salle["capacite"] = capacite
-            return salle
-    return None
-
-def deleteSalle(salle_id):
-    """Supprime une salle."""
-    global tableSalle
-    tableSalle = [salle for salle in tableSalle if salle["id"] != salle_id]
-    return {"message": f"Salle {salle_id} supprimée."}
+def CreateSalle(nom_salle, capacite):
+    conn = get_conn()
+    cur = conn.cursor()
+    # On met à jour la requête SQL
+    cur.execute("INSERT INTO salle (nom_salle, capacite) VALUES (?, ?)", (nom_salle, capacite))
+    conn.commit()
+    new_id = cur.lastrowid
+    conn.close()
+    return {"id": new_id, "nom_salle": nom_salle, "capacite": capacite}

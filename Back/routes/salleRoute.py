@@ -1,36 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from pydantic import BaseModel
 from Back.controller import salleController
 
-router = APIRouter()
+router = APIRouter(prefix="/salles", tags=["Salles"])
 
-@router.get("/getListSalles",summary="Récupère la liste de toutes les salles")
-def get_list_salle():
-    """Récupère la liste de toutes les salles."""
-    return salleController.getListSalle()
+# On met à jour les noms ici aussi !
+class SalleCreate(BaseModel):
+    nom_salle: str
+    capacite: int
 
-@router.get("/getOneSalle/{salle_id}",summary="Récupère une salle spécifique par son ID")
-def get_one_salle(salle_id: int):
-    """Récupère une salle spécifique par son ID."""
-    salle = salleController.getOneSalle(salle_id)
-    if not salle:
-        raise HTTPException(status_code=404, detail="Salle non trouvée")
-    return salle
+@router.get("/")
+def get_list_salles():
+    return salleController.getListSalles()
 
-@router.post("/addSalle", summary="Ajoute une nouvelle salle")
-def add_salle(nom: str, capacite: int):
-    """Ajoute une nouvelle salle."""
-    return salleController.createSalle(nom, capacite)
-
-@router.put("/updateSalle/{salle_id}",summary="Met à jour les informations d'une salle")
-def update_salle(salle_id: int, nom: str = None, capacite: int = None):
-    """Met à jour les informations d'une salle."""
-    salle = salleController.updateSalle(salle_id, nom, capacite)
-    if not salle:
-        raise HTTPException(status_code=404, detail="Salle non trouvée")
-    return salle
-
-@router.delete("/deleteSalle/{salle_id}",summary="Supprime une salle de la liste")
-def delete_salle(salle_id: int):
-    """Supprime une salle de la liste."""
-    # On peut vérifier si elle existe avant de supprimer pour être propre
-    return salleController.deleteSalle(salle_id)
+@router.post("/")
+def add_salle(salle: SalleCreate):
+    return salleController.CreateSalle(salle.nom_salle, salle.capacite)
