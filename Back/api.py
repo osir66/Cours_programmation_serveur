@@ -12,14 +12,10 @@ app.include_router(salleRoute.router)
 app.include_router(promotionRoute.router)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-code_creation_prof = BASE_DIR / "Front" / "create_prof.html"
+INDEX_FILE = BASE_DIR / "Front" / "create_prof.html"
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello FastAPI"}
-
-@app.get("/prof")
-def read_root():
-    if code_creation_prof.exists():
-        return FileResponse(str(code_creation_prof))
+    if INDEX_FILE.exists():
+        return FileResponse(str(INDEX_FILE))
     return {"message": "Hello FastAPI"}
