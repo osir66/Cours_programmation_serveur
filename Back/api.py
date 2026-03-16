@@ -18,6 +18,7 @@ FRONT_DIR = BASE_DIR / "Front" # On pointe directement vers le dossier Front
 # On déclare les futurs fichiers HTML
 code_creation_prof = FRONT_DIR / "create_prof.html"
 code_planning = FRONT_DIR / "planning.html" # <-- Ta future page pour le planning
+code_creation_cours = FRONT_DIR / "create_cours.html"
 
 # --- ROUTES POUR AFFICHER LES PAGES WEB ---
 
@@ -38,3 +39,9 @@ def get_planning_page():
         return FileResponse(str(code_planning))
     # Comme tu ne l'as pas encore créé, ça affichera ce message en attendant :
     return {"message": "La route est prête, mais le fichier planning.html n'existe pas encore !"}
+
+@app.get("/cour")
+def get_prof_page(): 
+    if code_creation_cours.exists():
+        return FileResponse(str(code_creation_cours))
+    return {"message": "Le fichier HTML des profs est introuvable."}
