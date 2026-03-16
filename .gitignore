@@ -46,3 +46,5 @@ Thumbs.db
 # Explicit Back package caches
 Back/__pycache__/
 Back/**/__pycache__/
+Back/Base/database.db
+Back/__pycache__/api.cpython-314.pyc
