@@ -26,7 +26,8 @@ class Promotion(SQLModel,table=True):
 #   -----------------------------------
 
 class User(SQLModel,table=True):
-    id_user : int |None = Field(default=None,primary_key=True)
+    id_user : int |None = Field(default=None, primary_key=True, autoincrement=True)
+    nom : str
     email : str 
     password : str 
     admin : bool 

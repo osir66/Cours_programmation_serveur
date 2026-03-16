@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test création utilisateur</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        form { max-width: 400px; margin: auto; }
+        label { display: block; margin-top: 15px; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; }
+        button { margin-top: 20px; padding: 10px 20px; }
+        .result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Tester la création d'utilisateur</h2>
+    <form id="userForm">
+
+
+        <label for="nom">Nom :</label>
+        <input type="text" id="nom" name="nom" required>
+
+        <label for="email">Email :</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Mot de passe :</label>
+        <input type="password" id="password" name="password" required>
+
+        <label for="admin">Admin :</label>
+        <select id="admin" name="admin">
+            <option value="false">Utilisateur</option>
+            <option value="true">Admin</option>
+        </select>
+
+        <button type="submit">Créer utilisateur</button>
+    </form>
+    <div class="result" id="result"></div>
+
+    <hr style="margin:40px 0;">
+    <h3>Mettre à jour un utilisateur</h3>
+    <form id="updateUserForm">
+        <label for="update_id">ID utilisateur :</label>
+        <input type="number" id="update_id" name="update_id" required>
+        <label for="update_nom">Nom :</label>
+        <input type="text" id="update_nom" name="update_nom" required>
+        <label for="update_email">Email :</label>
+        <input type="email" id="update_email" name="update_email" required>
+        <label for="update_password">Mot de passe :</label>
+        <input type="password" id="update_password" name="update_password" required>
+        <label for="update_admin">Admin :</label>
+        <select id="update_admin" name="update_admin">
+            <option value="false">Utilisateur</option>
+            <option value="true">Admin</option>
+        </select>
+        <button type="submit">Mettre à jour</button>
+    </form>
+    <div class="result" id="updateResult"></div>
+
+    <hr style="margin:40px 0;">
+    <h3>Récupérer un utilisateur par ID</h3>
+    <form id="getUserForm">
+        <label for="get_id">ID utilisateur :</label>
+        <input type="number" id="get_id" name="get_id" required>
+        <button type="submit">Rechercher</button>
+    </form>
+    <div class="result" id="getResult"></div>
+
+    <hr style="margin:40px 0;">
+    <h3>Liste des utilisateurs</h3>
+    <button onclick="fetchUsers()" type="button">Rafraîchir la liste</button>
+
+    <ul id="userList"></ul>
+
+    <script>
+        // Formulaire updateUser
+        document.getElementById('updateUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id_user = parseInt(document.getElementById('update_id').value);
+            const nom = document.getElementById('update_nom').value;
+            const email = document.getElementById('update_email').value;
+            const password = document.getElementById('update_password').value;
+            const admin = document.getElementById('update_admin').value === 'true';
+            const updateResult = document.getElementById('updateResult');
+            updateResult.textContent = 'Envoi...';
+            try {
+                const response = await fetch(`http://localhost:8000/user/updateUser`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_user, nom, email, password, admin })
+                });
+                const data = await response.json();
+                updateResult.textContent = JSON.stringify(data, null, 2);
+                fetchUsers();
+            } catch (err) {
+                updateResult.textContent = 'Erreur: ' + err.message;
+            }
+        });
+
+        // Formulaire getUser
+        document.getElementById('getUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id_user = parseInt(document.getElementById('get_id').value);
+            const getResult = document.getElementById('getResult');
+            getResult.textContent = 'Recherche...';
+            try {
+                const response = await fetch(`http://localhost:8000/user/getUser?id_user=${id_user}`);
+                const data = await response.json();
+                getResult.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                getResult.textContent = 'Erreur: ' + err.message;
+            }
+        });
+
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nom = document.getElementById('nom').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const admin = document.getElementById('admin').value === 'true';
+
+            const response = await fetch('http://localhost:8000/user/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nom, email, password, admin })
+            });
+
+            const resultDiv = document.getElementById('result');
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = '<span style="color:green">Utilisateur créé avec succès !</span><br>' + JSON.stringify(data);
+                fetchUsers(); // Rafraîchir la liste après création
+            } else {
+                const error = await response.text();
+                resultDiv.innerHTML = '<span style="color:red">Erreur :</span> ' + error;
+            }
+        });
+
+        async function fetchUsers() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = 'Chargement...';
+            try {
+                const response = await fetch('http://localhost:8000/user/getListUser');
+                if (response.ok) {
+                    const users = await response.json();
+                    userList.innerHTML = '';
+                    if (users.length === 0) {
+                        userList.innerHTML = '<li>Aucun utilisateur trouvé.</li>';
+                    } else {
+                        users.forEach(user => {
+                            userList.innerHTML += `<li>${user.id_user} - ${user.nom} - ${user.email} (${user.admin ? 'Admin' : 'User'})</li>`;
+                        });
+                    }
+                } else {
+                    userList.innerHTML = 'Erreur lors du chargement.';
+                }
+            } catch (err) {
+                userList.innerHTML = 'Erreur réseau.';
+            }
+        }
+
+        // Charger la liste au démarrage
+        window.onload = fetchUsers;
+    </script>
+</body>
+</html>
