@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Planning</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 800px; 
+            margin: auto;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        
+        /* Style pour les cartes de cours */
+        .cours-card { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            background: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📅 Planning des Cours</h1>
+    
+    <button id="btn-charger">Charger le planning</button>
+    
+    <div id="liste-cours" style="margin-top: 20px;">
+        <em>Cliquez sur le bouton pour afficher les cours...</em>
+    </div>
+
+    <script>
+        // On écoute le clic sur le bouton
+        document.getElementById('btn-charger').addEventListener('click', () => {
+            const divResultat = document.getElementById('liste-cours');
+            divResultat.innerHTML = "<em>Chargement en cours...</em>";
+
+            // On fait un appel GET à notre API (la route que tu as créée)
+            fetch('/cours/') 
+                .then(response => response.json()) // On transforme la réponse en JSON
+                .then(data => {
+                    divResultat.innerHTML = ""; // On vide le texte de chargement
+                    
+                    // Si la base de données est vide
+                    if (data.length === 0) {
+                        divResultat.innerHTML = "<p>Aucun cours n'est prévu pour le moment.</p>";
+                        return;
+                    }
+
+                    // On parcourt chaque cours récupéré et on crée une carte HTML
+                    data.forEach(cours => {
+                        const div = document.createElement('div');
+                        div.className = 'cours-card';
+                        
+                        // On formate un peu l'affichage
+                        div.innerHTML = `
+                            <h3 style="margin-top:0; color: #333;">${cours.matiere}</h3>
+                            <p><strong>Début :</strong> ${cours.date_debut.replace('T', ' à ')}</p>
+                            <p><strong>Fin :</strong> ${cours.date_fin.replace('T', ' à ')}</p>
+                            <hr style="border: 0.5px solid #eee;">
+                            <p style="font-size: 14px; color: #666;">
+                                <em>Infos techniques : ID Prof (${cours.id_prof}) | ID Salle (${cours.id_salle}) | ID Promo (${cours.id_promo})</em>
+                            </p>
+                        `;
+                        divResultat.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    divResultat.innerHTML = `<strong style="color:red;">Erreur lors du chargement des cours. Le serveur est-il bien lancé ?</strong>`;
+                });
+        });
+    </script>
+</body>
+</html>
