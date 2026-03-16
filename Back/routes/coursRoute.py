@@ -1,20 +1,32 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
+from datetime import datetime
 from Back.controller import coursController
 
-router = APIRouter()
+router = APIRouter(prefix="/cours", tags=["Planning"])
 
-@router.get("/cours", summary="Récupère la liste de tous les cours")
+class CoursCreate(BaseModel):
+    matiere: str
+    date_debut: datetime
+    date_fin: datetime
+    duree_total: datetime # Même si c'est une durée, on respecte ton modèle SQLModel
+    id_promo: int
+    id_salle: int
+    id_prof: int
+
+@router.get("/")
 def get_list_cours():
     return coursController.getListCours()
 
-@router.post("/addCours", summary="Crée un nouveau cours")
-def add_cours(matière: str, prof_id: int, durée: int, id_salle: int, date_heure: str, id_promo: int):
-    return coursController.CreateCours(matière, prof_id, durée, id_salle, date_heure, id_promo)
-
-@router.put("/UpdateCours/{cours_id}", summary="Met à jour les informations d'un cours")
-def update_cours(cours_id: int, matière: str = None, prof_id: int = None, durée: int = None, id_salle: int = None, date_heure: str = None, id_promo: int = None):
-    return coursController.UpdateCours(cours_id, matière, prof_id, durée, id_salle, date_heure, id_promo)
-
-@router.delete("/deleteCours/{cours_id}", summary="Supprime un cours de la liste")
-def delete_cours(cours_id: int):
-    return coursController.deleteCours(cours_id)
+@router.post("/")
+def add_cours(cours: CoursCreate):
+    # On convertit les datetime en string (texte) car SQLite préfère stocker les dates sous ce format
+    return coursController.CreateCours(
+        cours.matiere, 
+        str(cours.date_debut), 
+        str(cours.date_fin), 
+        str(cours.duree_total), 
+        cours.id_promo, 
+        cours.id_salle, 
+        cours.id_prof
+    )
