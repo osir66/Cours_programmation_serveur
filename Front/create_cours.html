@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Créer un cours</title>
+  <style>
+    body{font-family: Arial, Helvetica, sans-serif;max-width:720px;margin:2rem auto;padding:1rem}
+    label{display:block;margin-top:0.8rem;font-weight:bold;}
+    input{padding:0.4rem;width:100%;box-sizing:border-box;margin-top:0.3rem;}
+    button{margin-top:1.2rem;padding:0.6rem 1rem;cursor:pointer;}
+    pre{background:#f5f5f5;padding:1rem;overflow-x:auto;}
+  </style>
+</head>
+<body>
+  <h1>Créer un cours</h1>
+
+  <form id="createForm">
+    <label for="matiere">Matière</label>
+    <input id="matiere" name="matiere" type="text" required />
+
+    <label for="prof_id">ID du Professeur</label>
+    <input id="prof_id" name="prof_id" type="number" required />
+
+    <label for="duree">Durée</label>
+    <input id="duree" name="duree" type="number" required />
+
+    <label for="id_salle">ID de la Salle</label>
+    <input id="id_salle" name="id_salle" type="number" required />
+
+    <label for="date_heure">Date et Heure</label>
+    <input id="date_heure" name="date_heure" type="datetime-local" required />
+
+    <label for="id_promo">ID de la Promo</label>
+    <input id="id_promo" name="id_promo" type="number" required />
+
+    <button type="submit">Créer le cours</button>
+  </form>
+
+  <div id="result" aria-live="polite" style="margin-top:1rem; font-weight:bold;"></div>
+
+  <hr style="margin: 2rem 0;" />
+  <h2>Liste des cours</h2>
+  <button id="refresh">Rafraîchir la liste</button>
+  <pre id="list"></pre>
+
+  <script>
+    const API = window.location.origin;
+
+    const form = document.getElementById('createForm');
+    const result = document.getElementById('result');
+    const listPre = document.getElementById('list');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      result.textContent = 'Envoi en cours...';
+      
+      // On récupère et on formate les données envoyées par le formulaire
+      const payload = {
+        matière: document.getElementById('matiere').value,
+        prof_id: parseInt(document.getElementById('prof_id').value),
+        durée: parseInt(document.getElementById('duree').value),
+        id_salle: parseInt(document.getElementById('id_salle').value),
+        date_heure: document.getElementById('date_heure').value,
+        id_promo: parseInt(document.getElementById('id_promo').value)
+      };
+
+      try {
+        // Envoi de la requête POST vers /addCours
+        const res = await fetch(API + '/addCours', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(JSON.stringify(json));
+        }
+
+        result.textContent = "Succès : " + JSON.stringify(json, null, 2);
+        form.reset();
+        loadList();
+      } catch (err) {
+        result.textContent = 'Erreur: ' + err.message;
+      }
+    });
+
+    async function loadList(){
+      listPre.textContent = 'Chargement...';
+      try{
+        // Envoi de la requête GET vers /cours (d'après votre code Python)
+        const r = await fetch(API + '/cours');
+        const j = await r.json();
+        listPre.textContent = JSON.stringify(j, null, 2);
+      }catch(e){
+        listPre.textContent = 'Impossible de récupérer la liste: ' + e.message;
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadList);
+    // Charge la liste au démarrage
+    loadList();
+  </script>
+</body>
+</html>
