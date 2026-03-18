@@ -4,13 +4,13 @@ from pathlib import Path
 # Pointe vers Back/Base/database.db
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
 
-#fonction pour la connexion à la base de données 
+# Fonction pour la connexion à la base de données 
 def get_conn():
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
-#fonction pour récupérer la liste des promotions
+# Fonction pour récupérer la liste des promotions
 def getListPromotions():
     conn = get_conn()
     cur = conn.cursor()
@@ -19,7 +19,7 @@ def getListPromotions():
     conn.close()
     return rows
 
-#fonction pour créer une promotion
+# Fonction pour créer une promotion
 def CreatePromotion(nom_promotion, annee):
     conn = get_conn()
     cur = conn.cursor()
@@ -29,7 +29,7 @@ def CreatePromotion(nom_promotion, annee):
     conn.close()
     return {"id": new_id, "nom_promotion": nom_promotion, "annee": annee}
 
-#fonction pour modifier une promotion
+# Fonction pour modifier une promotion
 def updatePromotion(promo_id, nom_promotion=None, annee=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -52,7 +52,7 @@ def updatePromotion(promo_id, nom_promotion=None, annee=None):
     conn.close()
     return {"message": f"Promotion {promo_id} mise à jour avec succès"}
 
-#fonction qui suprime une promotion
+# Fonction qui supprime une promotion
 def deletePromotion(promo_id):
     conn = get_conn()
     cur = conn.cursor()

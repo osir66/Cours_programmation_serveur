@@ -4,13 +4,13 @@ from pathlib import Path
 # Pointe vers Back/Base/database.db
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
 
-#fonction pour une connexion à la base de données 
+# Fonction pour une connexion à la base de données 
 def get_conn():
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
-#fonction qui récupère la liste des profs
+# Fonction qui récupère la liste des profs
 def getListProf():
     conn = get_conn()
     cur = conn.cursor()
@@ -19,7 +19,7 @@ def getListProf():
     conn.close()
     return rows
 
-#fonction pour créer un prof 
+# Fonction pour créer un prof 
 def CreateProf(nom, prenom):
     conn = get_conn()
     cur = conn.cursor()
@@ -29,7 +29,7 @@ def CreateProf(nom, prenom):
     conn.close()
     return {"id": new_id, "nom": nom, "prenom": prenom}
 
-#Fonction pour changer les donées d'un prof 
+# Fonction pour changer les donées d'un prof 
 def UpdateProf(prof_id, nom=None, prenom=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -52,7 +52,7 @@ def UpdateProf(prof_id, nom=None, prenom=None):
     conn.close()
     return {"message": f"Professeur {prof_id} mis à jour avec succès"}
 
-#fonction pour supprimer un prof
+# Fonction pour supprimer un prof
 def deleteProf(prof_id):
     conn = get_conn()
     cur = conn.cursor()
