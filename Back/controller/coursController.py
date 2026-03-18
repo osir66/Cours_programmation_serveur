@@ -39,4 +39,3 @@ def CreateCours(matiere, date_debut, date_fin, duree_total, id_promo, id_salle, 
         "id_salle": id_salle,
         "id_prof": id_prof,
     }	
-

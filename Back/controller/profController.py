@@ -32,10 +32,12 @@ def UpdateProf(prof_id, nom=None, prenom=None):
     updates = []
     params = []
     if nom:
-        updates.append("nom = ?"); params.append(nom)
+        updates.append("nom = ?")
+        params.append(nom)
     if prenom:
-        updates.append("prenom = ?"); params.append(prenom)
-    
+        updates.append("prenom = ?")
+        params.append(prenom)
+        
     if not updates:
         conn.close()
         return {"message": "Rien à mettre à jour"}
