@@ -1,7 +1,7 @@
 from sqlmodel import create_engine, SQLModel
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from classe_bd import Prof, Promotion, User, Salle, Cours
+from classe_bd import *
 
 
 db_file_name = "database.db"
