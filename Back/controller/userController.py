@@ -1,10 +1,11 @@
 import sqlite3
 from pathlib import Path
 
+#Pointe vers Back/Base/database.db
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
 
 
-
+#fonction pour la connexion à la base de données
 def get_conn():
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -12,6 +13,7 @@ def get_conn():
 
     return conn
 
+#fonction pour récupérer la liste des utilisateurs
 def getListUser():
     conn = get_conn()
     cur = conn.cursor()
@@ -23,6 +25,7 @@ def getListUser():
     conn.close()
     return rows
 
+#fonction pour créer un utilisateur
 def CreateUser(id_user,email,password,admin):
     conn = get_conn()
     cur = conn.cursor()
@@ -45,6 +48,7 @@ def DeleteUser(id_user):
     cur.close()
     conn.close()
 
+#fonction pour mettre à jour un utilisateur
 def UpdateUser(id_user,email,password,admin):
 
 
