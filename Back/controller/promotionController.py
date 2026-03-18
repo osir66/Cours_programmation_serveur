@@ -28,3 +28,35 @@ def CreatePromotion(nom_promotion, annee):
     new_id = cur.lastrowid
     conn.close()
     return {"id": new_id, "nom_promotion": nom_promotion, "annee": annee}
+
+#fonction pour modifier une promotion
+def updatePromotion(promo_id, nom_promotion=None, annee=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    updates = []
+    params = []
+    if nom_promotion:
+        updates.append("nom_promotion = ?")
+        params.append(nom_promotion)
+    if annee:
+        updates.append("annee = ?")
+        params.append(annee)
+
+    if not updates:
+        conn.close()
+        return {"message": "Rien à mettre à jour"}
+        
+    params.append(promo_id)
+    cur.execute(f"UPDATE promotion SET {', '.join(updates)} WHERE id_promo = ?", params)
+    conn.commit()
+    conn.close()
+    return {"message": f"Promotion {promo_id} mise à jour avec succès"}
+
+#fonction qui suprime une promotion
+def deletePromotion(promo_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM promotion WHERE id_promo = ?", (promo_id,))
+    conn.commit()
+    conn.close()
+    return {"message": f"Promotion {promo_id} supprimée avec succès"}

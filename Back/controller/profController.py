@@ -29,7 +29,7 @@ def CreateProf(nom, prenom):
     conn.close()
     return {"id": new_id, "nom": nom, "prenom": prenom}
 
-#Fonction pour chager les donées d'un prof 
+#Fonction pour changer les donées d'un prof 
 def UpdateProf(prof_id, nom=None, prenom=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -51,3 +51,12 @@ def UpdateProf(prof_id, nom=None, prenom=None):
     conn.commit()
     conn.close()
     return {"message": f"Professeur {prof_id} mis à jour avec succès"}
+
+#fonction pour supprimer un prof
+def deleteProf(prof_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM prof WHERE id_prof = ?", (prof_id,))
+    conn.commit()
+    conn.close()
+    return {"message": f"Professeur {prof_id} supprimé avec succès"}

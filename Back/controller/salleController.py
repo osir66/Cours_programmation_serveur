@@ -29,3 +29,35 @@ def CreateSalle(nom_salle, capacite):
     new_id = cur.lastrowid
     conn.close()
     return {"id": new_id, "nom_salle": nom_salle, "capacite": capacite}
+
+#fonction pour modifier les salles
+def updateSalle(salle_id, nom_salle=None, capacite=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    updates = []
+    params = []
+    if nom_salle:
+        updates.append("nom_salle = ?")
+        params.append(nom_salle)
+    if capacite:
+        updates.append("capacite = ?")
+        params.append(capacite)
+
+    if not updates:
+        conn.close()
+        return {"message": "Rien à mettre à jour"}
+        
+    params.append(salle_id)
+    cur.execute(f"UPDATE salle SET {', '.join(updates)} WHERE id_salle = ?", params)
+    conn.commit()
+    conn.close()
+    return {"message": f"Salle {salle_id} mise à jour avec succès"}
+
+#fonction pour supprimer une salle
+def deleteSalle(salle_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM salle WHERE id_salle = ?", (salle_id,))
+    conn.commit()
+    conn.close()
+    return {"message": f"Salle {salle_id} supprimée avec succès"}

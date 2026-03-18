@@ -38,6 +38,7 @@ def CreateUser(id_user,email,password,admin):
     conn.close()
     return rows
 
+#fonction pour supprimer un utilisateur
 def DeleteUser(id_user):
 
 

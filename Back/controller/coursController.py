@@ -42,3 +42,53 @@ def CreateCours(matiere, date_debut, date_fin, duree_total, id_promo, id_salle, 
         "id_salle": id_salle,
         "id_prof": id_prof,
     }	
+ #fonction pour mettre à jour un cours
+def updateCours(id_cours, matiere=None, date_debut=None, date_fin=None, duree_total=None, id_promo=None, id_salle=None, id_prof=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    updates = []
+    params = []
+    
+    if matiere:
+        updates.append("matiere = ?")
+        params.append(matiere)
+    if date_debut:
+        updates.append("date_debut = ?")
+        params.append(date_debut)
+    if date_fin:
+        updates.append("date_fin = ?")
+        params.append(date_fin)
+    if duree_total:
+        updates.append("duree_total = ?")
+        params.append(duree_total)
+    if id_promo:
+        updates.append("id_promo = ?")
+        params.append(id_promo)
+    if id_salle:
+        updates.append("id_salle = ?")
+        params.append(id_salle)
+    if id_prof:
+        updates.append("id_prof = ?")
+        params.append(id_prof)
+
+    if not updates:
+        conn.close()
+        return {"message": "Rien à mettre à jour"}
+        
+    params.append(id_cours)
+    cur.execute(f"UPDATE cours SET {', '.join(updates)} WHERE id_cours = ?", params)
+    
+    conn.commit()
+    conn.close()
+    
+    return {"message": f"Cours {id_cours} mis à jour avec succès"}
+
+#foction pour supprimer un cours
+def deleteCours(id_cours):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM cours WHERE id_cours = ?", (id_cours,))
+    conn.commit()
+    conn.close()
+    return {"message": f"Cours {id_cours} supprimé avec succès"}

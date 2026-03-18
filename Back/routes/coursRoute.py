@@ -13,12 +13,12 @@ class CoursCreate(BaseModel):
     id_salle: int
     id_prof: int
 
-
-@router.get("/")
+#route pour récupérer la liste de tous les cours
+@router.get("/getListCours")
 def get_list_cours():
     return coursController.getListCours()
 
-
+#route pour ajouter un cours
 @router.post("/addCours")
 def add_cours(cours: CoursCreate):
     return coursController.CreateCours(
@@ -31,4 +31,22 @@ def add_cours(cours: CoursCreate):
         cours.id_prof
     )
 
+#route pour modifier un cours
+@router.put("/updateCours/{id_cours}")
+def update_cours(id_cours: int, cours: CoursCreate):
+    return coursController.updateCours(
+        id_cours,
+        cours.matiere,
+        cours.date_debut,
+        cours.date_fin,
+        cours.duree_total,
+        cours.id_promo,
+        cours.id_salle,
+        cours.id_prof
+    )
+
+#route pour supprimer un cours
+@router.delete("/deleteCours/{id_cours}")
+def delete_cours(id_cours: int):
+    return coursController.deleteCours(id_cours)
     
