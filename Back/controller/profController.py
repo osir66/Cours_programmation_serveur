@@ -46,8 +46,9 @@ def UpdateProf(prof_id, nom=None, prenom=None):
         conn.close()
         return {"message": "Rien à mettre à jour"}
         
-    params.append(prof_id)
-    cur.execute(f"UPDATE prof SET {', '.join(updates)} WHERE id_prof = ?", params)
+    params.append(promo_id)
+    query = f"UPDATE promotion SET {', '.join(updates)} WHERE id_promo = ?"
+    cur.execute(query, params)  
     conn.commit()
     conn.close()
     return {"message": f"Professeur {prof_id} mis à jour avec succès"}

@@ -1,6 +1,8 @@
 import sqlite3
 from pathlib import Path
 
+from fastapi import params
+
 # Pointe vers Back/Base/database.db
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
 
@@ -48,7 +50,8 @@ def updateSalle(salle_id, nom_salle=None, capacite=None):
         return {"message": "Rien à mettre à jour"}
         
     params.append(salle_id)
-    cur.execute(f"UPDATE salle SET {', '.join(updates)} WHERE id_salle = ?", params)
+    query = f"UPDATE salle SET {', '.join(updates)} WHERE id_salle = ?"
+    cur.execute(query, params)  
     conn.commit()
     conn.close()
     return {"message": f"Salle {salle_id} mise à jour avec succès"}
