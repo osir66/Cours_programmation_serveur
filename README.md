@@ -8,3 +8,12 @@ installer :
 Pour lancer le code dans le terminal 
     cd Back 
     uvicorn api:app --reload
+
+pytest ; python -m pytest 
+
+Coverage :  coverage run -m pytest
+            coverage report -m
+
+Bandit : bandit -r Back/
+
+flake : flake8 Back/  

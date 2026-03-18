@@ -47,12 +47,13 @@ def UpdateProf(prof_id, nom=None, prenom=None):
         return {"message": "Rien à mettre à jour"}
         
     params.append(prof_id)
-    cur.execute(f"UPDATE prof SET {', '.join(updates)} WHERE id_prof = ?", params)
+    query = f"UPDATE prof SET {', '.join(updates)} WHERE id_prof = ?"
+    cur.execute(query, params)  
     conn.commit()
     conn.close()
     return {"message": f"Professeur {prof_id} mis à jour avec succès"}
 
-# Fonction pour supprimer un prof
+# fonction pour supprimer un prof
 def deleteProf(prof_id):
     conn = get_conn()
     cur = conn.cursor()
