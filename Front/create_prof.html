@@ -36,6 +36,23 @@
     // Utiliser l'origine actuelle pour éviter les problèmes de CORS (localhost vs 127.0.0.1)
     const API = window.location.origin;
 
+    // Auth: bannière et vérification d'accès
+    (function(){
+        function getAuthUser(){ try{ return JSON.parse(localStorage.getItem('authUser')||'null'); }catch(e){return null;} }
+        const user = getAuthUser();
+        const banner = document.createElement('div');
+        banner.id = 'auth-banner';
+        banner.style = 'text-align:right;margin-bottom:12px;color:#1976d2;font-weight:700;';
+        if(user){
+            banner.innerHTML = 'Connecté en tant que : ' + (user.displayName || user.username) + ' <button id="logoutBtn" style="margin-left:8px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer">Déconnexion</button>';
+        } else {
+            banner.innerHTML = '<a href="/connexion" style="color:#1976d2;text-decoration:underline">Se connecter</a>';
+        }
+        document.body.insertBefore(banner, document.body.firstChild);
+        if(user){ document.getElementById('logoutBtn').addEventListener('click', function(){ localStorage.removeItem('authUser'); location.reload(); }); }
+        if(!user){ window.location.href = '/planning_modern'; }
+    })();
+
     const form = document.getElementById('createForm');
     const result = document.getElementById('result');
     const listPre = document.getElementById('list');

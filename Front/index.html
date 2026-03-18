@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - Gestion Planning</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', Arial, sans-serif; background: #f4f6fb; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 60px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 40px 24px 32px 24px; }
+        h1 { text-align: center; color: #1976d2; margin-bottom: 32px; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 22px 0; }
+        a.menu-link {
+            display: block;
+            background: #1976d2;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 18px 0;
+            text-align: center;
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 2px 8px rgba(25,118,210,0.08);
+        }
+        a.menu-link:hover {
+            background: #125ea7;
+            transform: translateY(-2px) scale(1.03);
+        }
+        .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion du Planning</h1>
+        <ul>
+            <li><a class="menu-link" href="/planning_modern">📅 Voir le planning</a></li>
+            <li class="requires-auth"><a class="menu-link" href="/cours">➕ Ajouter un cours</a></li>
+            <li class="requires-auth"><a class="menu-link" href="/prof">👨‍🏫 Ajouter un professeur</a></li>
+            <li class="requires-auth"><a class="menu-link" href="/salle">🏫 Ajouter une salle</a></li>
+            <li class="requires-auth"><a class="menu-link" href="/promotion">🎓 Ajouter une promotion</a></li>
+            <li><a class="menu-link" href="/connexion">🔐 Connexion</a></li>
+        </ul>
+        <div class="footer">Projet Programmation Serveur – Interface moderne</div>
+    </div>
+</body>
+    <script>
+    (function(){
+        function getAuthUser(){ try{ return JSON.parse(localStorage.getItem('authUser')||'null'); }catch(e){return null;} }
+        const user = getAuthUser();
+        const container = document.querySelector('.container');
+        const banner = document.createElement('div');
+        banner.id = 'auth-banner';
+        banner.style = 'text-align:right;margin-bottom:12px;color:#1976d2;font-weight:700;';
+        if(user){
+            banner.innerHTML = 'Connecté en tant que : ' + (user.displayName || user.username) + ' <button id="logoutBtn" style="margin-left:8px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer">Déconnexion</button>';
+        } else {
+            banner.innerHTML = '<a href="/connexion" style="color:#1976d2;text-decoration:underline">Se connecter</a>';
+        }
+        container.insertBefore(banner, container.firstChild);
+        if(user){ document.getElementById('logoutBtn').addEventListener('click', function(){ localStorage.removeItem('authUser'); location.reload(); }); }
+        if(!user){ document.querySelectorAll('.requires-auth').forEach(el => el.style.display = 'none'); }
+    })();
+    </script>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer une promotion</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', Arial, sans-serif; background: #f4f6fb; margin: 0; padding: 0; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px 24px 24px 24px; }
+        h1 { text-align: center; color: #2d3a4b; margin-bottom: 24px; }
+        label { display: block; margin-top: 1.2rem; font-weight: 700; color: #1976d2; }
+        input { padding: 10px; width: 100%; box-sizing: border-box; border-radius: 6px; border: 1px solid #cfd8dc; margin-top: 0.3rem; font-size: 16px; }
+        button { margin-top: 2rem; padding: 0.8rem 1.5rem; background: #1976d2; color: #fff; border: none; border-radius: 6px; font-size: 18px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #125ea7; }
+        .result { margin-top: 1.5rem; font-weight: bold; min-height: 1.5em; }
+        .list-promos { margin-top: 2.5rem; background: #f5f5f5; border-radius: 8px; padding: 1rem; font-size: 15px; max-height: 300px; overflow-y: auto; }
+        .promo-card { background: #e3eaf2; border-radius: 6px; margin-bottom: 10px; padding: 10px 12px; }
+        .promo-card strong { color: #1976d2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Créer une promotion</h1>
+        <a href="/" style="display:inline-block;margin-bottom:18px;color:#1976d2;text-decoration:underline;font-size:15px">← Retour menu</a>
+        <form id="createForm">
+            <label for="nom">Nom de la promotion</label>
+            <input id="nom" name="nom" type="text" required />
+            <button type="submit">Créer la promotion</button>
+        </form>
+        <div class="result" id="result" aria-live="polite"></div>
+        <div class="list-promos" id="list-promos"></div>
+    </div>
+    <script>
+        const API = window.location.origin;
+
+        // Auth: bannière et vérification d'accès
+        (function(){
+            function getAuthUser(){ try{ return JSON.parse(localStorage.getItem('authUser')||'null'); }catch(e){return null;} }
+            const user = getAuthUser();
+            const container = document.querySelector('.container');
+            const banner = document.createElement('div');
+            banner.id = 'auth-banner';
+            banner.style = 'text-align:right;margin-bottom:12px;color:#1976d2;font-weight:700;';
+            if(user){
+                banner.innerHTML = 'Connecté en tant que : ' + (user.displayName || user.username) + ' <button id="logoutBtn" style="margin-left:8px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer">Déconnexion</button>';
+            } else {
+                banner.innerHTML = '<a href="/connexion" style="color:#1976d2;text-decoration:underline">Se connecter</a>';
+            }
+            container.insertBefore(banner, container.firstChild);
+            if(user){ document.getElementById('logoutBtn').addEventListener('click', function(){ localStorage.removeItem('authUser'); location.reload(); }); }
+            if(!user){ window.location.href = '/planning_modern'; }
+        })();
+        const form = document.getElementById('createForm');
+        const result = document.getElementById('result');
+        const listPromos = document.getElementById('list-promos');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            result.textContent = 'Envoi en cours...';
+            const payload = { nom_promotion: document.getElementById('nom').value, annee: new Date().getFullYear() };
+            try {
+                const res = await fetch(API + '/promotions/createPromotion', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(JSON.stringify(json));
+                result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
+                form.reset();
+                loadList();
+            } catch (err) {
+                result.textContent = 'Erreur: ' + err.message;
+            }
+        });
+        async function loadList() {
+            listPromos.innerHTML = 'Chargement...';
+            try {
+                const r = await fetch(API + '/promotions/getListPromotions');
+                const j = await r.json();
+                if (!j.length) {
+                    listPromos.innerHTML = '<em>Aucune promotion enregistrée.</em>';
+                    return;
+                }
+                listPromos.innerHTML = j.map(p => `<div class='promo-card'><strong>${p.nom_promotion || 'Promo ' + p.id}</strong> (ID: ${p.id})</div>`).join('');
+            } catch (e) {
+                listPromos.innerHTML = 'Erreur chargement liste.';
+            }
+        }
+        loadList();
+    </script>
+</body>
+</html>
