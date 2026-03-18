@@ -54,3 +54,4 @@ class Cours(SQLModel,table=True):
     id_salle : int | None = Field(default=None,foreign_key="salle.id_salle")
     id_prof : int | None = Field(default=None,foreign_key="prof.id_prof")
     
+    

@@ -20,7 +20,6 @@ def get_list_cours():
 
 @router.post("/addCours")
 def add_cours(cours: CoursCreate):
-    # Plus besoin de convertir avec str() puisque c'est déjà du texte !
     return coursController.CreateCours(
         cours.matiere, 
         cours.date_debut, 
@@ -30,3 +29,4 @@ def add_cours(cours: CoursCreate):
         cours.id_salle, 
         cours.id_prof
     ) 
+    
