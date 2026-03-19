@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from fastapi import HTTPException
 
 # Définit le chemin vers la base de données
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
@@ -23,25 +24,59 @@ def getListCours():
 def CreateCours(matiere, date_debut, date_fin, duree_total, id_promo, id_salle, id_prof):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("""
+
+    # Vérification de chevauchement pour la promotion
+    if id_promo is not None:
+        cur.execute(
+            "SELECT COUNT(*) as c FROM cours WHERE id_promo = ? AND date_debut < ? AND date_fin > ?",
+            (id_promo, date_fin, date_debut),
+        )
+        if cur.fetchone()["c"] > 0:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Conflit d'horaires pour la promotion")
+
+    # Vérification de chevauchement pour la salle (si renseignée)
+    if id_salle is not None:
+        cur.execute(
+            "SELECT COUNT(*) as c FROM cours WHERE id_salle = ? AND date_debut < ? AND date_fin > ?",
+            (id_salle, date_fin, date_debut),
+        )
+        if cur.fetchone()["c"] > 0:
+            conn.close()
+            raise HTTPException(status_code=400, detail="La salle est déjà utilisée à cet horaire")
+
+    # Vérification de chevauchement pour le professeur (si renseigné)
+    if id_prof is not None:
+        cur.execute(
+            "SELECT COUNT(*) as c FROM cours WHERE id_prof = ? AND date_debut < ? AND date_fin > ?",
+            (id_prof, date_fin, date_debut),
+        )   
+        if cur.fetchone()["c"] > 0:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Le professeur a déjà un cours à cet horaire")
+
+    cur.execute(
+        """
         INSERT INTO cours (matiere, date_debut, date_fin, duree_total, id_promo, id_salle, id_prof) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (matiere, date_debut, date_fin, duree_total, id_promo, id_salle, id_prof))
-    
+        """,
+        (matiere, date_debut, date_fin, duree_total, id_promo, id_salle, id_prof),
+    )
+
     conn.commit()
     new_id = cur.lastrowid
     conn.close()
-    
+
     return {
-        "id_cours": new_id, 
-        "matiere": matiere, 
-        "date_debut": date_debut, 
+        "id_cours": new_id,
+        "matiere": matiere,
+        "date_debut": date_debut,
         "date_fin": date_fin,
         "duree_total": duree_total,
         "id_promo": id_promo,
         "id_salle": id_salle,
         "id_prof": id_prof,
-    }	
+    }
 # Fonction pour mettre à jour un cours
 def updateCours(id_cours, matiere=None, date_debut=None, date_fin=None, duree_total=None, id_promo=None, id_salle=None, id_prof=None):
     conn = get_conn()

@@ -28,6 +28,7 @@
         .filters {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 20px;
             margin-bottom: 24px;
         }
@@ -47,28 +48,55 @@
         button:hover {
             background: #125ea7;
         }
+        
+        /* Grille de l'emploi du temps */
+        .calendar-wrapper {
+            position: relative;
+            overflow-x: auto;
+        }
         .calendar {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
+            table-layout: fixed;
+            min-width: 800px;
         }
         .calendar th, .calendar td {
             border: 1px solid #e0e0e0;
-            padding: 12px 6px;
+            height: 60px; /* 1 heure = 60px */
             text-align: center;
+            position: relative;
+            padding: 0;
         }
         .calendar th {
             background: #e3eaf2;
             color: #2d3a4b;
+            font-size: 14px;
         }
-        .event {
+        .hour-col {
+            width: 80px;
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        /* Bloc de cours fluide */
+        .event-node {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            z-index: 10;
             border-radius: 6px;
-            padding: 6px 4px;
             color: #fff;
-            font-size: 15px;
-            margin: 2px 0;
+            padding: 6px;
+            font-size: 13px;
             font-weight: 500;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            overflow: hidden;
+            text-align: center;
+            line-height: 1.2;
+            border: 1px solid rgba(255,255,255,0.2);
         }
+
+        /* Couleurs matières */
         .matiere-1 { background: #42a5f5; }
         .matiere-2 { background: #66bb6a; }
         .matiere-3 { background: #ffa726; }
@@ -76,61 +104,60 @@
         .matiere-5 { background: #ef5350; }
         .matiere-6 { background: #26c6da; }
         .matiere-7 { background: #8d6e63; }
+
         @media (max-width: 700px) {
             .container { padding: 8px; }
-            .calendar th, .calendar td { padding: 4px 2px; font-size: 12px; }
+            .calendar th, .calendar td { height: 50px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div id="auth-banner" style="text-align:right;margin-bottom:12px;color:#1976d2;font-weight:700;"></div>
+        
         <h1>Emploi du temps par promotion</h1>
+        
         <a href="/" style="display:inline-block;margin-bottom:18px;color:#1976d2;text-decoration:underline;font-size:15px">← Retour menu</a>
+        
         <div class="filters">
             <label for="promo-select">Promotion :</label>
-            <select id="promo-select"></select>
+            <select id="promo-select"><option value="">Chargement...</option></select>
             <button id="refresh">Rafraîchir</button>
         </div>
-        <div id="calendar-container">
-            <em>Veuillez choisir une promotion pour afficher l'emploi du temps.</em>
+
+        <div id="calendar-container" class="calendar-wrapper">
+            <p style="text-align:center; padding: 20px;"><em>Veuillez choisir une promotion pour afficher l'emploi du temps.</em></p>
         </div>
     </div>
+
     <script>
         const API = window.location.origin;
 
-        // Affiche la bannière d'authentification (si connecté)
+        // Gestion de l'authentification
         (function(){
-            function getAuthUser(){ try{ return JSON.parse(localStorage.getItem('authUser')||'null'); }catch(e){return null;} }
-            const user = getAuthUser();
-            const container = document.querySelector('.container');
-            const banner = document.createElement('div');
-            banner.id = 'auth-banner';
-            banner.style = 'text-align:right;margin-bottom:12px;color:#1976d2;font-weight:700;';
+            const user = JSON.parse(localStorage.getItem('authUser')||'null');
+            const banner = document.getElementById('auth-banner');
             if(user){
-                banner.innerHTML = 'Connecté en tant que : ' + (user.displayName || user.username) + ' <button id="logoutBtn" style="margin-left:8px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer">Déconnexion</button>';
+                banner.innerHTML = 'Connecté en tant que : ' + (user.displayName || user.username) + ' <button id="logoutBtn" style="margin-left:8px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:12px;color:#333">Déconnexion</button>';
+                document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('authUser'); location.reload(); };
             } else {
                 banner.innerHTML = '<a href="/connexion" style="color:#1976d2;text-decoration:underline">Se connecter</a>';
             }
-            container.insertBefore(banner, container.firstChild);
-            if(user){ document.getElementById('logoutBtn').addEventListener('click', function(){ localStorage.removeItem('authUser'); location.reload(); }); }
         })();
 
-        // Utilitaires pour les couleurs de matières
         function matiereColorIdx(matiere) {
-            // Simple hash pour attribuer une couleur
             let sum = 0;
             for (let i = 0; i < matiere.length; i++) sum += matiere.charCodeAt(i);
             return (sum % 7) + 1;
         }
 
-        // Charger la liste des promotions
+        // Charger la liste des promos
         async function loadPromos() {
             const select = document.getElementById('promo-select');
-            select.innerHTML = '<option>Chargement...</option>';
             try {
                 const res = await fetch(API + '/promotions/getListPromotions');
                 const promos = await res.json();
-                select.innerHTML = '';
+                select.innerHTML = '<option value="">-- Sélectionner une promotion --</option>';
                 promos.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
@@ -142,60 +169,82 @@
             }
         }
 
-        // Charger et afficher l'emploi du temps pour une promo
+        // Charger le planning
         async function loadPlanning(promoId) {
             const container = document.getElementById('calendar-container');
-            container.innerHTML = '<em>Chargement...</em>';
+            container.innerHTML = '<p style="text-align:center; padding: 20px;"><em>Chargement...</em></p>';
+            
             try {
                 const res = await fetch(API + '/cours/getListCours');
                 const allCours = await res.json();
                 const cours = Array.isArray(allCours) ? allCours.filter(c => String(c.id_promo) === String(promoId)) : [];
+
                 if (!cours.length) {
-                    container.innerHTML = '<p>Aucun cours pour cette promotion.</p>';
+                    container.innerHTML = '<p style="text-align:center; padding: 20px;">Aucun cours pour cette promotion.</p>';
                     return;
                 }
-                // Générer la grille semaine (lundi-dimanche, 8h-20h)
+
+                // Création de la grille
                 const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-                let hours = [];
-                for (let h = 8; h <= 20; h++) hours.push(h);
-                let table = '<table class="calendar"><tr><th>Heure</th>';
-                days.forEach(d => table += `<th>${d}</th>`);
-                table += '</tr>';
-                hours.forEach(hour => {
-                    table += `<tr><th>${hour}h</th>`;
+                let html = '<table class="calendar"><thead><tr><th class="hour-col">Heure</th>';
+                days.forEach(d => html += `<th>${d}</th>`);
+                html += '</tr></thead><tbody>';
+
+                for (let h = 8; h <= 20; h++) {
+                    html += `<tr><th class="hour-col">${h}h</th>`;
                     for (let d = 0; d < 7; d++) {
-                        // Chercher les cours à cet horaire/jour
-                        const coursHere = cours.filter(c => {
-                            const date = new Date(c.date_debut);
-                            return date.getDay() === ((d+1)%7) && date.getHours() === hour;
-                        });
-                        if (coursHere.length) {
-                            table += '<td>';
-                            coursHere.forEach(c => {
-                                const colorIdx = matiereColorIdx(c.matiere);
-                                table += `<div class="event matiere-${colorIdx}">${c.matiere}<br><span style='font-size:12px'>${c.date_debut.slice(11,16)}-${c.date_fin.slice(11,16)}<br>${c.nom_prof || 'Prof ' + c.id_prof}<br>${c.nom_salle || 'Salle ' + c.id_salle}</span></div>`;
-                            });
-                            table += '</td>';
-                        } else {
-                            table += '<td></td>';
-                        }
+                        html += `<td id="cell-${d}-${h}"></td>`;
                     }
-                    table += '</tr>';
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                // Placement des cours par positionnement absolu
+                cours.forEach(c => {
+                    const start = new Date(c.date_debut);
+                    const end = new Date(c.date_fin);
+                    
+                    // Trouver le jour (Lundi = 0)
+                    const dayIdx = start.getDay() === 0 ? 6 : start.getDay() - 1;
+                    const startHour = start.getHours();
+                    
+                    const cell = document.getElementById(`cell-${dayIdx}-${startHour}`);
+                    if (cell) {
+                        const durationMin = (end - start) / (1000 * 60);
+                        const startMin = start.getMinutes();
+                        const colorIdx = matiereColorIdx(c.matiere);
+
+                        const div = document.createElement('div');
+                        div.className = `event-node matiere-${colorIdx}`;
+                        
+                        // 1 minute = 1px de hauteur (car cell height = 60px)
+                        div.style.top = `${startMin}px`;
+                        div.style.height = `${durationMin}px`;
+                        
+                        div.innerHTML = `
+                            <strong>${c.matiere}</strong><br>
+                            <span style="font-size:11px">${c.date_debut.slice(11,16)} - ${c.date_fin.slice(11,16)}</span><br>
+                            <span style="font-size:11px; opacity:0.9">${c.nom_prof || 'Prof '+c.id_prof}<br>${c.nom_salle || 'Salle '+c.id_salle}</span>
+                        `;
+                        cell.appendChild(div);
+                    }
                 });
-                table += '</table>';
-                container.innerHTML = table;
+
             } catch (e) {
-                container.innerHTML = '<span style="color:red">Erreur lors du chargement du planning.</span>';
+                container.innerHTML = '<p style="text-align:center; color:red;">Erreur lors du chargement.</p>';
             }
         }
 
+        // Événements
         document.getElementById('refresh').addEventListener('click', () => {
-            const promoId = document.getElementById('promo-select').value;
-            if (promoId) loadPlanning(promoId);
+            const val = document.getElementById('promo-select').value;
+            if(val) loadPlanning(val);
         });
-        document.getElementById('promo-select').addEventListener('change', e => {
-            if (e.target.value) loadPlanning(e.target.value);
+        document.getElementById('promo-select').addEventListener('change', (e) => {
+            if(e.target.value) loadPlanning(e.target.value);
         });
+
         loadPromos();
     </script>
 </body>
