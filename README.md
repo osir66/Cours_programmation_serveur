@@ -4,6 +4,10 @@ Projet dans le cadre du cours de programmation coté serveur, le but est d'utili
 installer :
     FastApi
     Uvicorn
+    bandit
+    httpx
+    pytest
+    coverage
     
 Pour lancer le code dans le terminal 
     cd Back 

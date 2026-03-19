@@ -46,3 +46,5 @@ Thumbs.db
 # Explicit Back package caches
 Back/__pycache__/
 Back/**/__pycache__/
+Back/__pycache__/api.cpython-314.pyc
+Back/routes/__pycache__/profRoute.cpython-314.pyc
