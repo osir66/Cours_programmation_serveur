@@ -54,25 +54,45 @@
         const form = document.getElementById('createForm');
         const result = document.getElementById('result');
         const listPromos = document.getElementById('list-promos');
+
+        let editId = null;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             result.textContent = 'Envoi en cours...';
             const payload = { nom_promotion: document.getElementById('nom').value, annee: new Date().getFullYear() };
             try {
-                const res = await fetch(API + '/promotions/createPromotion', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const json = await res.json();
-                if (!res.ok) throw new Error(JSON.stringify(json));
-                result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
-                form.reset();
-                loadList();
+                if (editId) {
+                    const res = await fetch(`${API}/promotions/updatePromotion/${editId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(JSON.stringify(json));
+                    result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
+                    editId = null;
+                    submitBtn.textContent = 'Créer la promotion';
+                    form.reset();
+                    loadList();
+                } else {
+                    const res = await fetch(API + '/promotions/createPromotion', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(JSON.stringify(json));
+                    result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
+                    form.reset();
+                    loadList();
+                }
             } catch (err) {
                 result.textContent = 'Erreur: ' + err.message;
             }
         });
+
         async function loadList() {
             listPromos.innerHTML = 'Chargement...';
             try {
@@ -82,7 +102,33 @@
                     listPromos.innerHTML = '<em>Aucune promotion enregistrée.</em>';
                     return;
                 }
-                listPromos.innerHTML = j.map(p => `<div class='promo-card'><strong>${p.nom_promotion || 'Promo ' + p.id}</strong> (ID: ${p.id})</div>`).join('');
+                listPromos.innerHTML = j.map(p => {
+                    const id = p.id || p.id_promo || '';
+                    return `<div class='promo-card'><strong>${p.nom_promotion || 'Promo ' + id}</strong> (ID: ${id})<div style="margin-top:6px;"><button class="edit-promo" data-id="${id}">Modifier</button> <button class="delete-promo" data-id="${id}">Supprimer</button></div></div>`;
+                }).join('');
+
+                document.querySelectorAll('.edit-promo').forEach(btn => btn.addEventListener('click', (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    const promo = j.find(x => String(x.id || x.id_promo) === String(id));
+                    if (!promo) return;
+                    document.getElementById('nom').value = promo.nom_promotion || '';
+                    editId = id;
+                    submitBtn.textContent = 'Mettre à jour la promotion';
+                }));
+
+                document.querySelectorAll('.delete-promo').forEach(btn => btn.addEventListener('click', async (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    if (!confirm('Supprimer la promotion #' + id + ' ?')) return;
+                    try {
+                        const res = await fetch(`${API}/promotions/deletePromotion/${id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(JSON.stringify(json));
+                        loadList();
+                    } catch (err) {
+                        result.textContent = 'Erreur suppression: ' + err.message;
+                    }
+                }));
+
             } catch (e) {
                 listPromos.innerHTML = 'Erreur chargement liste.';
             }
