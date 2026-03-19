@@ -29,7 +29,7 @@ code_connexion = FRONT_DIR / "connexion.html"
 
 # --- ROUTES POUR AFFICHER LES PAGES WEB ---
 
-@app.get("/prof")
+@app.get("/prof", summary="Affiche la page de gestion des professeurs")
 def get_prof_page():
     if code_creation_prof.exists():
         return FileResponse(str(code_creation_prof))
@@ -37,51 +37,51 @@ def get_prof_page():
 
 
 # --- PAGE D'ACCUEIL (MENU MODERNE) ---
-@app.get("/")
+@app.get("/", summary="Affiche la page d'accueil")
 def get_index_page():
     if code_index.exists():
         return FileResponse(str(code_index))
     return {"message": "Le fichier index.html n'existe pas dans Front."}
 
 # --- AUTRES PAGES MODERNES ---
-@app.get("/planning")
+@app.get("/planning",summary="Affiche la page de planning")
 def get_planning_page():
     if code_planning.exists():
         return FileResponse(str(code_planning))
     return {"message": "Le fichier planning.html n'existe pas."}
 
-@app.get("/planning_modern")
+@app.get("/planning_modern",summary="Affiche la page de planning moderne")
 def get_planning_modern_page():
     if code_planning_modern.exists():
         return FileResponse(str(code_planning_modern))
     return {"message": "Le fichier planning_modern.html n'existe pas."}
 
-@app.get("/cours")
+@app.get("/cours", summary="Affiche la page de création des cours")
 def get_cours_page():
     if code_creation_cours.exists():
         return FileResponse(str(code_creation_cours))
     return {"message": "Le fichier HTML des cours est introuvable."}
 
-@app.get("/salle")
+@app.get("/salle", summary="Affiche la page de création des salles")
 def get_salle_page():
     if code_create_salle_modern.exists():
         return FileResponse(str(code_create_salle_modern))
     return {"message": "Le fichier HTML des salles est introuvable."}
 
-@app.get("/promotion")
+@app.get("/promotion", summary="Affiche la page de création des promotions")
 def get_promotion_page():
     if code_create_promotion_modern.exists():
         return FileResponse(str(code_create_promotion_modern))
     return {"message": "Le fichier HTML des promotions est introuvable."}
 
-@app.get("/cour")
+@app.get("/cour", summary="Affiche la page de création des cour")
 def get_cours_page():
     if code_creation_cours.exists():
         return FileResponse(str(code_creation_cours))
     return {"message": "Le fichier HTML des cours est introuvable."}
 
 
-@app.get("/connexion")
+@app.get("/connexion", summary="Affiche la page de connexion")
 def get_connexion_page():
     if code_connexion.exists():
         return FileResponse(str(code_connexion))

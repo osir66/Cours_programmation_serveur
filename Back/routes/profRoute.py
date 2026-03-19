@@ -26,7 +26,7 @@ def add_prof(prof: ProfCreate):
 
 
 # Route pour modifier un professeur
-@router.put("/UpdateProfs/{prof_id}")
+@router.put("/UpdateProfs/{prof_id}", summary="Modifie un professeur")
 def update_prof(
     prof_id: int,
     nom: str = None,
@@ -35,6 +35,6 @@ def update_prof(
     return profController.UpdateProf(prof_id, nom, prenom)
 
 # Route pour supprimer un professeur
-@router.delete("/deleteProf/{prof_id}")
+@router.delete("/deleteProf/{prof_id}", summary="Supprime un professeur")
 def delete_prof(prof_id: int):
     return profController.deleteProf(prof_id)
