@@ -37,7 +37,7 @@ def get_prof_page():
 
 
 # --- PAGE D'ACCUEIL (MENU MODERNE) ---
-@app.get("/", summary="Affiche la page d'accueil")
+@app.get("/", summary="Affiche la page d'accueil (front)")
 def get_index_page():
     if code_index.exists():
         return FileResponse(str(code_index))
