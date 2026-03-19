@@ -54,25 +54,45 @@
         const form = document.getElementById('createForm');
         const result = document.getElementById('result');
         const listSalles = document.getElementById('list-salles');
+
+        let editId = null;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             result.textContent = 'Envoi en cours...';
-                const payload = { nom_salle: document.getElementById('nom').value, capacite: 0 };
+            const payload = { nom_salle: document.getElementById('nom').value, capacite: 0 };
             try {
+                if (editId) {
+                    const res = await fetch(`${API}/salles/updateSalle/${editId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(JSON.stringify(json));
+                    result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
+                    editId = null;
+                    submitBtn.textContent = 'Créer la salle';
+                    form.reset();
+                    loadList();
+                } else {
                     const res = await fetch(API + '/salles/createSalle', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const json = await res.json();
-                if (!res.ok) throw new Error(JSON.stringify(json));
-                result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
-                form.reset();
-                loadList();
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(JSON.stringify(json));
+                    result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
+                    form.reset();
+                    loadList();
+                }
             } catch (err) {
                 result.textContent = 'Erreur: ' + err.message;
             }
         });
+
         async function loadList() {
             listSalles.innerHTML = 'Chargement...';
             try {
@@ -82,7 +102,33 @@
                     listSalles.innerHTML = '<em>Aucune salle enregistrée.</em>';
                     return;
                 }
-                listSalles.innerHTML = j.map(s => `<div class='salle-card'><strong>${s.nom_salle || 'Salle ' + s.id}</strong> (ID: ${s.id})</div>`).join('');
+                listSalles.innerHTML = j.map(s => {
+                    const id = s.id || s.id_salle || '';
+                    return `<div class='salle-card'><strong>${s.nom_salle || 'Salle ' + id}</strong> (ID: ${id})<div style="margin-top:6px;"><button class="edit-salle" data-id="${id}">Modifier</button> <button class="delete-salle" data-id="${id}">Supprimer</button></div></div>`;
+                }).join('');
+
+                document.querySelectorAll('.edit-salle').forEach(btn => btn.addEventListener('click', (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    const salle = j.find(x => String(x.id || x.id_salle) === String(id));
+                    if (!salle) return;
+                    document.getElementById('nom').value = salle.nom_salle || '';
+                    editId = id;
+                    submitBtn.textContent = 'Mettre à jour la salle';
+                }));
+
+                document.querySelectorAll('.delete-salle').forEach(btn => btn.addEventListener('click', async (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    if (!confirm('Supprimer la salle #' + id + ' ?')) return;
+                    try {
+                        const res = await fetch(`${API}/salles/deleteSalle/${id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(JSON.stringify(json));
+                        loadList();
+                    } catch (err) {
+                        result.textContent = 'Erreur suppression: ' + err.message;
+                    }
+                }));
+
             } catch (e) {
                 listSalles.innerHTML = 'Erreur chargement liste.';
             }

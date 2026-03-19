@@ -174,6 +174,10 @@
             return Math.round(diffMs / 60000);
         }
 
+        // Edition / Création
+        let editId = null;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             result.textContent = 'Envoi en cours...';
@@ -195,8 +199,10 @@
                 id_promo: parseOptionalInt(document.getElementById('id_promo').value)
             };
             try {
-                const res = await fetch(API + '/cours/addCours', {
-                    method: 'POST',
+                const url = editId ? `${API}/cours/updateCours/${editId}` : `${API}/cours/addCours`;
+                const method = editId ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
@@ -204,22 +210,68 @@
                 if (!res.ok) throw new Error(JSON.stringify(json));
                 result.textContent = 'Succès : ' + JSON.stringify(json, null, 2);
                 form.reset();
+                editId = null;
+                submitBtn.textContent = 'Créer le cours';
                 loadList();
             } catch (err) {
                 result.textContent = 'Erreur: ' + err.message;
             }
         });
 
+        // Liste interactive avec actions
+        let lastCourses = [];
         async function loadList() {
             listCours.innerHTML = 'Chargement...';
             try {
                 const r = await fetch(API + '/cours/getListCours');
                 const j = await r.json();
-                if (!j.length) {
+                lastCourses = Array.isArray(j) ? j : [];
+                if (!lastCourses.length) {
                     listCours.innerHTML = '<em>Aucun cours enregistré.</em>';
                     return;
                 }
-                listCours.innerHTML = j.map(c => `<div class='cours-card'><strong>${c.matiere}</strong> | ${c.date_debut.slice(0,16).replace('T',' ')} - ${c.date_fin.slice(11,16)}<br>Prof: ${c.id_prof || '-'} | Salle: ${c.id_salle || '-'} | Promo: ${c.id_promo || '-'}</div>`).join('');
+                listCours.innerHTML = lastCourses.map(c => {
+                    const id = c.id_cours || c.id || '';
+                    return `
+                        <div class='cours-card' data-id='${id}'>
+                            <strong>${c.matiere}</strong> | ${String(c.date_debut).slice(0,16).replace('T',' ')} - ${String(c.date_fin).slice(11,16)}<br>
+                            Prof: ${c.id_prof || '-'} | Salle: ${c.id_salle || '-'} | Promo: ${c.id_promo || '-'}
+                            <div style="margin-top:6px;">
+                                <button class="edit-cours" data-id="${id}">Modifier</button>
+                                <button class="delete-cours" data-id="${id}">Supprimer</button>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                // Attach events
+                document.querySelectorAll('.edit-cours').forEach(btn => btn.addEventListener('click', (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    const course = lastCourses.find(x => String(x.id_cours || x.id) === String(id));
+                    if (!course) return;
+                    document.getElementById('matiere').value = course.matiere || '';
+                    document.getElementById('date_debut').value = String(course.date_debut).slice(0,16);
+                    document.getElementById('date_fin').value = String(course.date_fin).slice(0,16);
+                    document.getElementById('id_prof').value = course.id_prof || '';
+                    document.getElementById('id_salle').value = course.id_salle || '';
+                    document.getElementById('id_promo').value = course.id_promo || '';
+                    editId = id;
+                    submitBtn.textContent = 'Mettre à jour le cours';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }));
+
+                document.querySelectorAll('.delete-cours').forEach(btn => btn.addEventListener('click', async (ev) => {
+                    const id = ev.currentTarget.dataset.id;
+                    if (!confirm('Supprimer le cours #' + id + ' ?')) return;
+                    try {
+                        const res = await fetch(`${API}/cours/deleteCours/${id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(JSON.stringify(json));
+                        loadList();
+                    } catch (err) {
+                        alert('Erreur suppression: ' + err.message);
+                    }
+                }));
+
             } catch (e) {
                 listCours.innerHTML = 'Erreur chargement liste.';
             }

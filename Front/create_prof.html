@@ -30,7 +30,7 @@
   <hr />
   <h2>Liste des professeurs</h2>
   <button id="refresh">Rafraîchir la liste</button>
-  <pre id="list"></pre>
+  <div id="list"></div>
 
   <script>
     // Utiliser l'origine actuelle pour éviter les problèmes de CORS (localhost vs 127.0.0.1)
@@ -57,37 +57,82 @@
     const result = document.getElementById('result');
     const listPre = document.getElementById('list');
 
+    // Edit / Create
+    let editId = null;
+    const listDiv = document.getElementById('list');
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       result.textContent = 'Envoi...';
-      const payload = {
-        nom: document.getElementById('nom').value,
-        prenom: document.getElementById('prenom').value
-      };
-
+      const nom = document.getElementById('nom').value;
+      const prenom = document.getElementById('prenom').value;
       try {
-        const res = await fetch(API + '/addProf', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        result.textContent = JSON.stringify(json, null, 2);
-        form.reset();
-        loadList();
+        if (editId) {
+          // Update via query params (route expects nom/prenom as params)
+          const url = `${API}/UpdateProfs/${editId}?nom=${encodeURIComponent(nom)}&prenom=${encodeURIComponent(prenom)}`;
+          const res = await fetch(url, { method: 'PUT' });
+          const json = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(json));
+          result.textContent = JSON.stringify(json, null, 2);
+          editId = null;
+          form.reset();
+          loadList();
+        } else {
+          const payload = { nom, prenom };
+          const res = await fetch(API + '/addProf', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(json));
+          result.textContent = JSON.stringify(json, null, 2);
+          form.reset();
+          loadList();
+        }
       } catch (err) {
         result.textContent = 'Erreur: ' + err.message;
       }
     });
 
     async function loadList(){
-      listPre.textContent = 'Chargement...';
+      listDiv.innerHTML = 'Chargement...';
       try{
         const r = await fetch(API + '/getListProfs');
         const j = await r.json();
-        listPre.textContent = JSON.stringify(j, null, 2);
+        if (!Array.isArray(j) || j.length === 0) {
+          listDiv.innerHTML = '<em>Aucun professeur.</em>';
+          return;
+        }
+        listDiv.innerHTML = j.map(p => {
+          const id = p.id || p.id_prof || '';
+          return `<div style="padding:8px;border-radius:6px;background:#f3f6fb;margin-bottom:8px;"><strong>${p.nom} ${p.prenom}</strong> (ID: ${id})<div style="margin-top:6px;"><button class="edit-prof" data-id="${id}">Modifier</button> <button class="delete-prof" data-id="${id}">Supprimer</button></div></div>`;
+        }).join('');
+
+        document.querySelectorAll('.edit-prof').forEach(btn => btn.addEventListener('click', (ev) => {
+          const id = ev.currentTarget.dataset.id;
+          const prof = j.find(x => String(x.id || x.id_prof) === String(id));
+          if (!prof) return;
+          document.getElementById('nom').value = prof.nom || '';
+          document.getElementById('prenom').value = prof.prenom || '';
+          editId = id;
+        }));
+
+        document.querySelectorAll('.delete-prof').forEach(btn => btn.addEventListener('click', async (ev) => {
+          const id = ev.currentTarget.dataset.id;
+          if (!confirm('Supprimer le professeur #' + id + ' ?')) return;
+          try {
+            const res = await fetch(`${API}/deleteProf/${id}`, { method: 'DELETE' });
+            const json = await res.json();
+            if (!res.ok) throw new Error(JSON.stringify(json));
+            loadList();
+          } catch (err) {
+            result.textContent = 'Erreur suppression: ' + err.message;
+          }
+        }));
+
       }catch(e){
-        listPre.textContent = 'Impossible de récupérer la liste: ' + e.message;
+        listDiv.innerHTML = 'Impossible de récupérer la liste: ' + e.message;
       }
     }
 
