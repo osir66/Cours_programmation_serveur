@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 # Route pour récupérer la liste de tous les utilisateurs
-@router.get("/getListUser", summary="Récupère la liste de tous les utilisateurs")
+@router.get("/getListUser", summary="Récupère la liste de tous les utilisateurs (back-end) ")
 def get_list_user():
     return userController.getListUser()
 
@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
 
 
 # Route pour ajouter un utilisateur
-@router.post("/addUser", summary="Ajoute un utilisateur")
+@router.post("/addUser", summary="Ajoute un utilisateur (back-end)")
 def add_user(payload: UserCreate):
     existing = [u for u in userController.getListUser() if u.get('email') == payload.email]
     if existing:
@@ -29,13 +29,13 @@ def add_user(payload: UserCreate):
 
 
 # Route pour modifier un utilisateur
-@router.put("/updateUser", summary="Modifie un utilisateur")
+@router.put("/updateUser", summary="Modifie un utilisateur (back-end)")
 def update_user(id_user: int, email: str, password: str, admin: bool):
     return userController.UpdateUser(id_user, email, password, admin)
 
 
 # Route pour supprimer un utilisateur
-@router.delete("/deleteUser/{id_user}",summary="Supprime un utilisateur")
+@router.delete("/deleteUser/{id_user}",summary="Supprime un utilisateur (back-end)")
 def delete_user(id_user: int):
     return userController.deleteUser(id_user)
 
@@ -45,7 +45,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
-@router.post('/login', summary="Authentifie un utilisateur")
+@router.post('/login', summary="Authentifie un utilisateur (back-end)")
 def login(payload: LoginRequest):
     user = userController.authenticate_user(payload.username, payload.password)
     if not user:
