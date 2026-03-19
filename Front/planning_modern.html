@@ -184,14 +184,17 @@
                     return;
                 }
 
-                // Création de la grille
+                // Création de la grille (heures visibles 08:00-17:59 mais affichage clippé à 08:15-17:15)
                 const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-                let html = '<table class="calendar"><thead><tr><th class="hour-col">Heure</th>';
+                let html = '<div style="text-align:center;margin-bottom:8px;color:#1976d2;font-weight:700;">Plage affichée : 08:15 — 17:15</div>';
+                html += '<table class="calendar"><thead><tr><th class="hour-col">Heure</th>';
                 days.forEach(d => html += `<th>${d}</th>`);
                 html += '</tr></thead><tbody>';
 
-                for (let h = 8; h <= 20; h++) {
-                    html += `<tr><th class="hour-col">${h}h</th>`;
+                // Génère les lignes pour 8h à 17h (inclus) — on affiche 08:15 en haut et 17:15 en bas via les étiquettes
+                for (let h = 8; h <= 17; h++) {
+                    let label = (h === 8) ? '08:15' : (h === 17) ? '17:15' : `${h}h`;
+                    html += `<tr><th class="hour-col">${label}</th>`;
                     for (let d = 0; d < 7; d++) {
                         html += `<td id="cell-${d}-${h}"></td>`;
                     }
@@ -200,28 +203,45 @@
                 html += '</tbody></table>';
                 container.innerHTML = html;
 
-                // Placement des cours par positionnement absolu
+                // Placement des cours: on clip les cours à la fenêtre 08:15 - 17:15
                 cours.forEach(c => {
                     const start = new Date(c.date_debut);
                     const end = new Date(c.date_fin);
-                    
+
+                    // Fenêtre visible pour le jour du cours
+                    const windowStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 8, 15, 0, 0);
+                    const windowEnd = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 17, 15, 0, 0);
+
+                    // Si pas de recouvrement, on ignore
+                    if (end <= windowStart || start >= windowEnd) return;
+
+                    const visStart = start < windowStart ? windowStart : start;
+                    const visEnd = end > windowEnd ? windowEnd : end;
+
+                    if (visEnd <= visStart) return;
+
                     // Trouver le jour (Lundi = 0)
-                    const dayIdx = start.getDay() === 0 ? 6 : start.getDay() - 1;
-                    const startHour = start.getHours();
-                    
-                    const cell = document.getElementById(`cell-${dayIdx}-${startHour}`);
+                    const dayIdx = visStart.getDay() === 0 ? 6 : visStart.getDay() - 1;
+                    const startHour = visStart.getHours();
+
+                    // Si la cellule n'existe pas (sécurité), on tente d'utiliser la cellule la plus proche
+                    let cell = document.getElementById(`cell-${dayIdx}-${startHour}`);
+                    if (!cell) {
+                        // tenter heure -1 ou +1 pour couvrir bords
+                        cell = document.getElementById(`cell-${dayIdx}-${startHour - 1}`) || document.getElementById(`cell-${dayIdx}-${startHour + 1}`);
+                    }
                     if (cell) {
-                        const durationMin = (end - start) / (1000 * 60);
-                        const startMin = start.getMinutes();
+                        const durationMin = (visEnd - visStart) / (1000 * 60);
+                        const startMin = visStart.getMinutes();
                         const colorIdx = matiereColorIdx(c.matiere);
 
                         const div = document.createElement('div');
                         div.className = `event-node matiere-${colorIdx}`;
-                        
+
                         // 1 minute = 1px de hauteur (car cell height = 60px)
                         div.style.top = `${startMin}px`;
                         div.style.height = `${durationMin}px`;
-                        
+
                         div.innerHTML = `
                             <strong>${c.matiere}</strong><br>
                             <span style="font-size:11px">${c.date_debut.slice(11,16)} - ${c.date_fin.slice(11,16)}</span><br>

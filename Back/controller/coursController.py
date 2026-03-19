@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from fastapi import HTTPException
+from datetime import datetime
 
 # Définit le chemin vers la base de données
 DB_PATH = Path(__file__).resolve().parents[1] / "Base" / "database.db"
@@ -22,6 +23,26 @@ def getListCours():
 
 # Fonction pour créer un cours
 def CreateCours(matiere, date_debut, date_fin, duree_total, id_promo, id_salle, id_prof):
+    # Validation des dates et de la plage horaire (08:15 - 17:15)
+    try:
+        dt_start = datetime.fromisoformat(date_debut)
+        dt_end = datetime.fromisoformat(date_fin)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Format de date invalide. Utilisez ISO 8601 (YYYY-MM-DDTHH:MM)")
+
+    if dt_end <= dt_start:
+        raise HTTPException(status_code=400, detail="La date de fin doit être après la date de début")
+
+    # Exiger que le cours commence et finisse le même jour
+    if dt_start.date() != dt_end.date():
+        raise HTTPException(status_code=400, detail="Le cours doit commencer et finir le même jour")
+
+    window_start = dt_start.replace(hour=8, minute=15, second=0, microsecond=0)
+    window_end = dt_start.replace(hour=17, minute=15, second=0, microsecond=0)
+
+    if dt_start < window_start or dt_end > window_end:
+        raise HTTPException(status_code=400, detail="Les horaires doivent être comprises entre 08:15 et 17:15")
+
     conn = get_conn()
     cur = conn.cursor()
 
