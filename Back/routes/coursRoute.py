@@ -24,7 +24,7 @@ def get_list_cours():
 
 
 # Route pour ajouter un cours
-@router.post("/addCours")
+@router.post("/addCours", summary="Ajouter un cours, vérifie la date, que la salle n'est pas déja prise")
 def add_cours(cours: CoursCreate):
     return coursController.CreateCours(
         cours.matiere,
