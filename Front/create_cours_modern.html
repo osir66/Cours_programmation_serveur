@@ -188,6 +188,11 @@
                 result.textContent = 'Erreur: vérifiez les dates (la date de fin doit être après la date de début).';
                 return;
             }
+            // Contraintes : min 30 minutes, max 4 heures (240 minutes)
+            if (dureeMinutes < 30 || dureeMinutes > 240) {
+                result.textContent = 'La durée doit être comprise entre 30 minutes et 4 heures.';
+                return;
+            }
             document.getElementById('duree_total').value = String(dureeMinutes);
             const payload = {
                 matiere: document.getElementById('matiere').value,

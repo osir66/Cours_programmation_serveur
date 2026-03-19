@@ -151,6 +151,28 @@
             return (sum % 7) + 1;
         }
 
+        function startOfWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay(); // 0 (Sun) .. 6 (Sat)
+            const diff = (day + 6) % 7; // days since Monday
+            date.setDate(date.getDate() - diff);
+            date.setHours(0,0,0,0);
+            return date;
+        }
+
+        function addDays(d, n) {
+            const dt = new Date(d);
+            dt.setDate(dt.getDate() + n);
+            return dt;
+        }
+
+        function formatDateLabel(d) {
+            return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+        }
+
+        // current week (Monday)
+        let currentWeekStart = startOfWeek(new Date());
+
         // Charger la liste des promos
         async function loadPromos() {
             const select = document.getElementById('promo-select');
@@ -177,21 +199,31 @@
             try {
                 const res = await fetch(API + '/cours/getListCours');
                 const allCours = await res.json();
-                const cours = Array.isArray(allCours) ? allCours.filter(c => String(c.id_promo) === String(promoId)) : [];
+                const coursAll = Array.isArray(allCours) ? allCours.filter(c => String(c.id_promo) === String(promoId)) : [];
 
-                if (!cours.length) {
-                    container.innerHTML = '<p style="text-align:center; padding: 20px;">Aucun cours pour cette promotion.</p>';
-                    return;
-                }
-
-                // Création de la grille (heures visibles 08:00-17:59 mais affichage clippé à 08:15-17:15)
+                // Création de la grille hebdomadaire avec navigation
                 const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-                let html = '<div style="text-align:center;margin-bottom:8px;color:#1976d2;font-weight:700;">Plage affichée : 08:15 — 17:15</div>';
+                const weekStart = currentWeekStart;
+                const weekEnd = addDays(weekStart, 6);
+
+                let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+                html += '<div>';
+                html += '<button id="prevWeek" style="margin-right:6px;padding:6px 10px;border-radius:6px;border:1px solid #cfd8dc;background:#fff;color:#1976d2;cursor:pointer">‹</button>';
+                html += '<button id="todayWeek" style="margin-right:6px;padding:6px 10px;border-radius:6px;border:1px solid #cfd8dc;background:#fff;cursor:pointer">Aujourd\'hui</button>';
+                html += '<button id="nextWeek" style="padding:6px 10px;border-radius:6px;border:1px solid #cfd8dc;background:#fff;color:#1976d2;cursor:pointer">›</button>';
+                html += '</div>';
+                html += `<div style="font-weight:700;color:#1976d2" id="weekLabel">Semaine : ${formatDateLabel(weekStart)} - ${formatDateLabel(weekEnd)}</div>`;
+                html += '<div style="color:#1976d2"></div>';
+                html += '</div>';
+
                 html += '<table class="calendar"><thead><tr><th class="hour-col">Heure</th>';
-                days.forEach(d => html += `<th>${d}</th>`);
+                days.forEach((d, idx) => {
+                    const date = addDays(weekStart, idx);
+                    html += `<th>${d}<div style="font-size:12px;color:#445">${formatDateLabel(date)}</div></th>`;
+                });
                 html += '</tr></thead><tbody>';
 
-                // Génère les lignes pour 8h à 17h (inclus) — on affiche 08:15 en haut et 17:15 en bas via les étiquettes
+                // Génère les lignes pour 8h à 17h (inclus)
                 for (let h = 8; h <= 17; h++) {
                     let label = (h === 8) ? '08:15' : (h === 17) ? '17:15' : `${h}h`;
                     html += `<tr><th class="hour-col">${label}</th>`;
@@ -202,6 +234,21 @@
                 }
                 html += '</tbody></table>';
                 container.innerHTML = html;
+
+                // navigation
+                document.getElementById('prevWeek').addEventListener('click', () => { currentWeekStart = addDays(currentWeekStart, -7); if (document.getElementById('promo-select').value) loadPlanning(document.getElementById('promo-select').value); else loadPlanning(promoId); });
+                document.getElementById('nextWeek').addEventListener('click', () => { currentWeekStart = addDays(currentWeekStart, 7); if (document.getElementById('promo-select').value) loadPlanning(document.getElementById('promo-select').value); else loadPlanning(promoId); });
+                document.getElementById('todayWeek').addEventListener('click', () => { currentWeekStart = startOfWeek(new Date()); if (document.getElementById('promo-select').value) loadPlanning(document.getElementById('promo-select').value); else loadPlanning(promoId); });
+
+                // Filtrer les cours pour la semaine affichée
+                const weekStartDate = new Date(weekStart);
+                weekStartDate.setHours(0,0,0,0);
+                const weekEndDate = addDays(weekStartDate, 7); // exclusif
+
+                const cours = coursAll.filter(c => {
+                    const s = new Date(c.date_debut);
+                    return s >= weekStartDate && s < weekEndDate;
+                });
 
                 // Placement des cours: on clip les cours à la fenêtre 08:15 - 17:15
                 cours.forEach(c => {
@@ -220,8 +267,9 @@
 
                     if (visEnd <= visStart) return;
 
-                    // Trouver le jour (Lundi = 0)
-                    const dayIdx = visStart.getDay() === 0 ? 6 : visStart.getDay() - 1;
+                    // Trouver l'index du jour dans la semaine (0 = lundi)
+                    const dayIdx = Math.floor((visStart - weekStartDate) / (1000 * 60 * 60 * 24));
+                    if (dayIdx < 0 || dayIdx > 6) return;
                     const startHour = visStart.getHours();
 
                     // Si la cellule n'existe pas (sécurité), on tente d'utiliser la cellule la plus proche

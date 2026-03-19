@@ -25,8 +25,7 @@
     <label for="date_fin">Date de fin</label>
     <input id="date_fin" name="date_fin" type="datetime-local" required />
 
-    <label for="duree_total">Durée totale (Format Date/Heure selon le modèle)</label>
-    <input id="duree_total" name="duree_total" type="datetime-local" required />
+    <input id="duree_total" name="duree_total" type="hidden" />
 
     <label for="id_prof">ID du Professeur (optionnel)</label>
     <input id="id_prof" name="id_prof" type="number" />
@@ -60,16 +59,40 @@
         return isNaN(parsed) ? null : parsed;
     };
 
+    function computeDurationMinutes(startStr, endStr) {
+      if (!startStr || !endStr) return null;
+      const s = new Date(startStr);
+      const e = new Date(endStr);
+      if (isNaN(s) || isNaN(e)) return null;
+      const diffMs = e - s;
+      if (diffMs <= 0) return null;
+      return Math.round(diffMs / 60000);
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       result.textContent = 'Envoi en cours...';
       
+      // Calculer la durée côté front et appliquer les contraintes (30min - 240min)
+      const dateDebutVal = document.getElementById('date_debut').value;
+      const dateFinVal = document.getElementById('date_fin').value;
+      const dureeMinutes = computeDurationMinutes(dateDebutVal, dateFinVal);
+      if (dureeMinutes === null) {
+        result.textContent = 'Erreur: vérifiez les dates (la date de fin doit être après la date de début).';
+        return;
+      }
+      if (dureeMinutes < 30 || dureeMinutes > 240) {
+        result.textContent = 'La durée doit être comprise entre 30 minutes et 4 heures.';
+        return;
+      }
+      document.getElementById('duree_total').value = String(dureeMinutes);
+
       // On récupère et on formate les données pour matcher exactement les attributs SQLModel
       const payload = {
         matiere: document.getElementById('matiere').value,
-        date_debut: document.getElementById('date_debut').value,
-        date_fin: document.getElementById('date_fin').value,
-        duree_total: document.getElementById('duree_total').value,
+        date_debut: dateDebutVal,
+        date_fin: dateFinVal,
+        duree_total: String(dureeMinutes),
         id_prof: parseOptionalInt(document.getElementById('id_prof').value),
         id_salle: parseOptionalInt(document.getElementById('id_salle').value),
         id_promo: parseOptionalInt(document.getElementById('id_promo').value)
